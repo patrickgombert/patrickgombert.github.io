@@ -8,8 +8,8 @@ markdown: redcarpet
 highlighter: pygments
 
 paginate: 20
-baseurl: /
-domain_name: 'http://patrickgombert.com'
+baseurl: "/"
+url: "http://patrickgombert.com"
 
 permalink:       /:year/:title/
 
