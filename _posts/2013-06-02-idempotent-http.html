@@ -1,0 +1,36 @@
+---
+layout: post
+title: Idempotent HTTP
+date: 2013-06-02
+---
+
+<p>
+  Web developers have a habit of taking HTTP for granted because it just works. HTTP works so well that people all over the world exercise the protocol <a href=http://googleblog.blogspot.com/2012/02/google-public-dns-70-billion-requests.html>billions of times per day</a> without even blinking an eye. With so much usage it is imperative that we understand how to use the protocol correctly. The <a href=http://tomayko.com/writings/on-http-abuse>correct usage of HTTP verbs</a> is well documented as are the <a href=http://blog.8thlight.com/adam-gooch/2013/03/01/help-prevent-session-hijacking.html> perils of using a client's state</a>. However, in this post I want to focus on a less-noted topic: the need to respect idempotency when using HTTP.
+</p>
+
+<p>
+  Idempotent is a big word with a simple meaning, so don't feel intimidated. Idempotency refers to the ability to operate on a resource with the same command any number of times and maintain the same state. That is to say the resource stays unchanged after each subsequent operation. For example, SQL update statements are idempotent. If we find a user named 'Patrick' and set his employer to '8th Light' the end result will be that 'Patrick' is employed by '8th Light' even if the update is run more than once.
+</p>
+
+<h3>Benefits of Compliance</h3>
+<p>
+  How does it help to maintain idempotence with HTTP? One clear win is that clients of a server can retry the same request any number of times. Suppose a client connects to a server, sends a request, and then a timeout occurs. Instead of attempting to figure out what the world looks like according to the server, the client can just send the same request again without fear. This is further amplified if we want to make multiple requests to multiple services. If one part of the process fails, we can resend each request without having to perform any logic to target the failure across all of the involved systems. Being mindful of idempotence can also save you in situations where you should not create or further mutate a resource, such as charging credit cards.
+</p>
+
+<p>
+  The HTTP verbs GET, HEAD, DELETE, &amp; PUT are always idempotent if their use correctly conforms to the <a href=http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html>HTTP specification</a>. POST is the verb for non-idempotent requests and is often understood to be for <i>create</i> requests. PUT is usually refered to as the <i>update</i> verb, but this understanding might be a bit naive.
+</p>
+
+<h3>Changing the Heuristic</h3>
+<p>
+  Sometimes it can be difficult to differentiate between a PUT and a POST. For instance, what if we implement a counter? Imagine a system (circa 1995) where everytime a user interacts with the counter it increases by one. In this example, we can GET the count of the counter at anytime. Should we use PUT when we want to increment the counter? It might be intuitive to say yes because we are <i>updating</i> the counter resource. I might have baited you a bit with the word update, because the answer is no. Why is it no? Updating the counter is not idempotent and therefore falls out of specification for PUT. So how do we justify POST which is typically associated with <i>creation</i>? Well, we could say that we are creating counter entries, and our get is simply a summation of counter entries. Of course this is only the perception from the outside world, the server can implement this any way it chooses.
+</p>
+
+<p>
+ Instead of focusing on create vs update we ought to focus on idempotent vs non-idempotent as a verb heuristic. This idea will make systems more robust and reliable since PUT will be always idempotent.
+</p>
+
+<h3>Favoring Idempotence</h3>
+<p>
+  As HTTP continues to connect multiple systems together it becomes more and more important to think about idempotent endpoints as the standard. That is to say, in order to use POST, we must prove the necessity of non-idempotence with a resource.
+</p>
