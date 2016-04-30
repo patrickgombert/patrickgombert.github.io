@@ -1,0 +1,39 @@
+---
+layout: post
+title: What Is Assumed When Deferring Database Decisions?
+date: 2016-04-29
+---
+
+I first heard about the idea of deferring database decisions from Bob Martin, who pioneered the concept while working on [FitNesse](http://www.fitnesse.org/) and has expanded on the topic in talks such as "[Architecture: The Lost Years](https://vimeo.com/68215570)". The idea is to write a data access layer interface and allow the implementation to be pluggable. Then, as development is ongoing, the business use cases for data access are encoded in the interface and not tied to any particular data store.
+
+One benefit of creating an access layer instead of accessing data through an ORM is that there is not a temptation to throw database access around haphazardly throughout the codebase. Data access patterns are driven by use cases instead of driven by what the ORM is able to do, thereby promoting a clean separation of concerns and a loose coupling of the business logic and persistence layer.
+
+In my mind, this is a good thing. We want clean separations of concerns. Having a loosely coupled and pluggable architecture allows for easy testing and rapid development in the long term. However, there seems to be an assumption, when treating the database as a detail, that the only concern of the data layer is mapping the application's data from the shape the application knows about to the shape the database expects. This is what ORMs have traditionally done. This is what it means to treat the database as a detail, we can plug in a mapping layer that ultimately talks to whatever storage we want.
+
+This is where adherence to this philosophy falls down, because databases are more than just a final resting point for a certain shape of data. Databases have access patterns, and those access patterns affect their usage by their collaborators.
+
+### Implicit Assumptions of Applications ###
+
+It is really hard to track the implicit data access contracts of an application. While an explicit interface can specify the shape of the data, there is no known way to codify access patterns in any verifiable way. Knowledge of the viable access patterns only comes from understanding your database and the properties it promises and exhibits.
+
+When the database is treated as a detail, it starts to conform naturally to the access patterns of the application. This shouldn't be totally surprising, but it means that the interactions we build between our business logic and our data access layer becomes a pretty important detail. How does an interface convey transactionally committed data? Should the business logic assume transactions? These kinds of design decisions affect the business logic and its contract with the data layer.
+
+For instance, FitNesse assumes the ability to read its own writes from the data access abstraction.
+
+Something as innocuous as [a test that makes a new Wiki page](https://github.com/unclebob/fitnesse/blob/91cdf72c9c30673e678dbd336db72caac0d9b12e/test/fitnesse/fixtures/PageCreatorTest.java#L28), reads it back, and asserts various things about the Wiki page can expose a lot about assumptions underlying the data access. In this test there is a commit invoked on [a Wiki page](https://github.com/unclebob/fitnesse/blob/91cdf72c9c30673e678dbd336db72caac0d9b12e/src/fitnesse/fixtures/PageCreator.java#L26). WikiPage, however, [is an interface](https://github.com/unclebob/fitnesse/blob/91cdf72c9c30673e678dbd336db72caac0d9b12e/src/fitnesse/wiki/WikiPage.java#L9), and what it means to commit is truly a detail of each implementation. The test goes on to make [a call to get the page](https://github.com/unclebob/fitnesse/blob/91cdf72c9c30673e678dbd336db72caac0d9b12e/test/fitnesse/fixtures/PageCreatorTest.java#L42) immediately after its creation. With this test case the authors have eliminated a whole category of databases that don't allow for read-your-own-writes consistency. While the decision of which specific database to choose is deferred, the authors still can't pick just any database. The local filesystem is a valid candidate for read-your-own-writes consistency, which is why it remained an option to the authors.
+
+Now, did the authors of FitNesse intend to corner themselves into eventually using a datastore with strong consistency? Yes, definitely. And that's ok! It's a good thing to let the use cases drive the implementation. Is the database a detail at this point? The app has implicit and deep knowledge of the data access patterns, but the actual definition of methods like commit are still, yes, a detail. Albeit, the detail must conform to a certain branch of the database family tree, and the business logic won't work as expected if the wrong database technology is ultimately selected.
+
+### Taking 'Database As A Detail' To Its Logical Extreme ###
+
+Some of my peers at 8th Light created a library called [hyperion](https://github.com/8thlight/hyperion) in an attempt to take the database deferment idea to the extreme (full disclosure, I worked on this as well by contributing to the Ruby version of the library). The idea was to reduce all datastores to key/value structures with strong consistency semantics.
+
+We were able to plug in a Riak datastore that passed our test suite. [Our test suite](https://github.com/8thlight/hyperion/blob/master/riak/spec/hyperion/riak_spec.clj#L144) assumed [read-your-own-write](https://github.com/8thlight/hyperion/blob/b1b8f60a5ef013da854e98319220b97920727865/api/src/hyperion/dev/spec/searching.clj#L132) semantics, though. If you know anything about Riak that sentence should feel weird to read, because Riak offers eventual consistency as a tradeoff for higher availability. An application using an eventually consistent database can't assume to read a write that was just made because the write might not have made it to every node in the cluster by the time of the next read. Our test case was not sufficiently complex to expose this fundamental disconnect. Eventual consistency, in this case, was the desired access pattern; it can't be abstracted over in a general database access abstraction. Eventual consistency is implicit in the way the code interacts with the database layer.
+
+I know that the developers of hyperion (again, myself included) really believed that the database was a detail, and that this library could allow you to write all of your code against the in-memory database and just plop in a database implementation in the end. We tiptoed around the constraints because we felt like we had the right idea. We were confident that the data could be shaped by pluggable adapters, and the data use cases could be constrained such that they could be common to all database implementations. We were wrong.
+
+What was found was that applications became handcuffed. Instead of the application owning its interaction with the database to the point where the database became a detail, the inverse ended up being true. The business logic tip-toed around the application's own requirements in order to meet the constrained nature of hyperion. If a team spun up Postgres and sat it behind hyperion, it would be a total failure to then swap Postgres out for a Riak cluster. The data access patterns would have changed, and the app would be almost guaranteed to not behave correctly.
+
+### Understanding Your Needs ###
+
+It's crucial to long-term project stability to decouple data access and business logic. However, a database is more than a data store, and if a team does not consider the data access patterns they will find that the database will become the biggest detail of their application. It's important to consider the use cases and goals of the project in order to decide what properties and guarantees are expected of the database. Then, the business logic can be written with correct and non-contradictory assumptions about the databases' access patterns
