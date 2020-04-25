@@ -4,12 +4,11 @@ aboutPage: true
 
 exclude: ["Gemfile", "Gemfile.lock", "LICENSE", "README.md"]
 
-markdown: redcarpet
-highlighter: pygments
+highlighter: rouge
 
 paginate: 20
 baseurl: "/"
-url: "http://patrickgombert.com"
+url: "patrickgombert.com"
 
 permalink:       /:year/:title/
 
