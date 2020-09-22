@@ -4,6 +4,6 @@ permalink: about/
 profile: true
 ---
 
-Patrick Gombert is a software engineer living in Chicago.
+Hello! I’m Patrick. I'm a polyglot software engineer, mentor, and a continuous learner based out of Chicago.
 
 {% include footer.html %}
