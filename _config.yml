@@ -8,7 +8,7 @@ highlighter: rouge
 
 paginate: 20
 baseurl: "/"
-url: "patrickgombert.com"
+url: "https://patrickgombert.com"
 
 permalink:       /:year/:title/
 
