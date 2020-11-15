@@ -23,9 +23,9 @@ The first layer is the memtable which you can probably guess by the name is an i
 
 Memtables are mutable, ephemeral structures which are dumped to disk periodically. When this occurs, a new, empty memtable is created and begins accepting writes in place of the previous memtable. Typically, databases will expose some kind of setting for the maximum size of a memtable and once that maximum size is reached the flushing process will trigger.
 
-### Sorted String Tables ###
+### Static Sorted Table ###
 
-The format used when a memtable is flushed to disk is a series of files known as Sorted String Tables (SSTs). Contained within each SST are key value pairs sorted lexicographically. Each file is immutable so once a memtable is flushed the files will not change until they reach their end of life.
+The format used when a memtable is flushed to disk is a series of files known as Static Sorted Table (SSTs). Contained within each SST are key value pairs sorted lexicographically. Each file is immutable so once a memtable is flushed the files will not change until they reach their end of life.
 
 If a user wishes to query for a given key the file that contains the key's range can be binary searched until the corresponding key is either found within the file or not found within the file. Since each file contains a run of keys and keys do not repeat between files, we know that if a key is not in a file responsible for its range then the key does not exist in the set of SST files.
 
