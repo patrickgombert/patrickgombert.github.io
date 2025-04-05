@@ -54,17 +54,12 @@ I've generated a [prompt plan](https://github.com/patrickgombert/vctsdb/blob/mai
 
 I had already run _cargo new vctsdb_ and thus had checked off the first checkbox. This was not vibes of me, please forgive me for I have Sinned. Looking at the second checkbox I don't really need CI/CD, but I do want a test runner. The remaining checkboxes feel a bit less like project setup, but that's not for me to decide!
 
-```
-I have a TODO list within `todo.md` for my overall project plan. Could you execute on the 'Project Setup' items? Please note that I have already initialized this as a rust repository via `cargo new`. Also note that I do not require CI/CD, but do want to have a test suite. If you want to learn more please consult the `spec.md` file.
-```
+>I have a TODO list within `todo.md` for my overall project plan. Could you execute on the 'Project Setup' items? Please note that I have already initialized this as a rust repository via `cargo new`. Also note that I do not require CI/CD, but do want to have a test suite. If you want to learn more please consult the `spec.md` file.
 
 It responds with:
 
-```
-First, let's create the required directory structure:
-
-mkdir -p src/{storage,ingestion,query} tests
-```
+> First, let's create the required directory structure:
+> mkdir -p src/{storage,ingestion,query} tests
 
 I run this. It's being very literal and following the perscribed boundaries for the sub components _storage_, _ingestion_, and _query_.
 
@@ -72,30 +67,23 @@ It goes on to add the _tracing_ and _tracing-subscriber_ crates. I quickly look 
 
 It sets up _tracing_ in a main method, I don't really look too hard because this just looks like boiler plate code. It then asks to run _cargo build_, sounds good. But uh-oh, compilation failed when invoking the _build_ method on _FmtSubscriber_. It then jumps around a bit which is confusing.
 
-```
-I see we need to create the module files and fix the subscriber builder. Let's create the necessary module files first:
-
-touch src/storage/{wal,lsm}.rs src/ingestion/{parser,formats}.rs src/query/{parser,planner,executor}.rs
-```
+> I see we need to create the module files and fix the subscriber builder. Let's create the necessary module files first:
+> touch src/storage/{wal,lsm}.rs src/ingestion/{parser,formats}.rs src/query/{parser,planner,executor}.rs
 
 Sure, why not. Maybe the act of  meandering through your tasks unites all coders, AI and human alike. Now it fixes the usage of _FmtSubscriber_ and replaces the hallucinated _build_ with _init_. It builds, but with a warning. Cursor does not care about the warning, again maybe it's just like me. It runs _cargo test_ and it fails compilation.
 
-```
-We need to make a few fixes:
-1. Make the crate a library to be able to use it in tests
-2. Fix the unused variable warning in main.rs
-3. Fix the unused imports in the module files
-Let's make these changes:
-First, let's create a lib.rs file to expose our modules:
-```
+> We need to make a few fixes:
+> 1. Make the crate a library to be able to use it in tests
+> 2. Fix the unused variable warning in main.rs
+> 3. Fix the unused imports in the module files
+> Let's make these changes:
+> First, let's create a lib.rs file to expose our modules:
 
 I accept and it creates the modules. It also decided to fix the warning! The test suite runs (it still only has the _assert!(true)_ dummy test). I ask it check off the items in _todo.md_ and it does. It then notes that we have two items left.
 
-```
-The remaining items in this section are:
-1. Set up CI/CD pipeline (which you mentioned is not needed)
-2. Configure performance metrics collection
-```
+> The remaining items in this section are:
+> 1. Set up CI/CD pipeline (which you mentioned is not needed)
+> 2. Configure performance metrics collection
 
 I tell it to remove the CI/CD item and to complete the other item. It wants to add dependencies on _metrics_ and _metrics-exporter-prometheus_. I really don't think that we need to bring prometheus into this, but I inhale in my preference and exhale out a vibe and click _Run Command_. It adds some metrics boilerplate setup and lets me know that prometheus will be available at _http://localhost:9090/metrics_ while the application is running. I'm glad I vibed, because that might be fun to watch. It now has all of _Project Setup_ completed, each TODO item is checked off.
 
@@ -109,9 +97,7 @@ It runs _cargo run_ again... and there's another error. It hallucinated some of 
 
 I ask about this.
 
-```
-Why is localhost:9090/metrics producing an empty html page?
-```
+> Why is localhost:9090/metrics producing an empty html page?
 
 It says it's because we aren't capturing any metrics (makes sense), so it invents some fake metrics.
 
@@ -138,67 +124,57 @@ Now, let's move on to the actual project. The TODO list has two sub-sections for
 
 I'll just start with the data structures and check those off first.
 
-```
-Let's move on to Phase 1: Core Storage Foundation. Go ahead and complete the Data Structure Implementation section.
-```
+> Let's move on to Phase 1: Core Storage Foundation. Go ahead and complete the Data Structure Implementation section.
 
 It does what I said it would do and created some slim-ish structs, but they're a little heftier than I anctipated because there is lots of error handling. It also adds the _thiserror_ dependency. It asks to run the tests like a good little AI. The tests are interesting, it's mandating ASCII for all strings and non-negative time stamps. I do notice one very intersting test which I'll just keep an eye on:
 
 ```
-  // Try to add point with non-increasing timestamp
-  let invalid_point = DataPoint::new(1500, 44.0, tags);
-  assert!(matches!(
-      series.add_point(invalid_point).await,
-      Err(DataError::NonIncreasingTimestamp)
-  ));
+// Try to add point with non-increasing timestamp
+let invalid_point = DataPoint::new(1500, 44.0, tags);
+assert!(matches!(
+    series.add_point(invalid_point).await,
+    Err(DataError::NonIncreasingTimestamp)
+));
 ```
 
 This is absolutely not an invariant a time-series database would have. I just noticed that these tests are very literal transcriptions of the TODO which I glossed over earlier, but I'm going to run with it for now. Using only ASCII strings is whatever, I don't care either way. "Strictly increasing timestamps" is definitely not great. There's also a lock around around the points in the timeseries. I don't fully understand the relationship between these in-memory storage structs and the rest of the submodule, which is going to be persisting to disk. It doesn't really matter if I fully understand or see the path forward, because I can simply trust the process. I'll just pretend that I don't know about clocks on computers and let this all slide, but later on I might poke at some of these decisions if it causes problems.
 
 The test pass! Let's move on to the WAL.
 
-```
-Let's continue and implement the WAL. Let's start with the WAL serialization format and Segment management sub-sections for now. I want to see how those look before continuing to the Recovery Process sub-section.
-```
+> Let's continue and implement the WAL. Let's start with the WAL serialization format and Segment management sub-sections for now. I want to see how those look before continuing to the Recovery Process sub-section.
 
 Cool! It generated a WAL implementation that writes entries in segments. It's kind of interesting that it chose JSON for the format of each entry. It's essentially the series name along with the _DataPoint_ which was generated earlier. It's also including a _crc_ in the entry JSON. This will be handy for debugging. I actually like this decision because you can make the format pluggable later on. Then you might have a situation where JSON can be used in test or for debugging, and a more compact format used in production.
 
 It has a few tests for reading, writing, segment rotation, and checksum validation. I ask to run the tests and it fails compilation. It iterates on the errors, even manually implementing the _Debug_ trait for one of the WAL structs. It finally compiles, but the tests fail. It has a theory though!
 
-```
-We have two test failures to fix:
-1. test_wal_entry_validation is failing because we're trying to read the header as a UTF-8 string, but it's written as binary JSON.
-2. test_wal_segment_rotation is failing because we're not properly tracking the segment size.
-```
+> We have two test failures to fix:
+> 1. test_wal_entry_validation is failing because we're trying to read the header as a UTF-8 string, but it's written as binary JSON.
+> 2. test_wal_segment_rotation is failing because we're not properly tracking the segment size.
 
 I accept and it informs me of the changes
 
-```
-The key changes I made are:
-1 Fixed segment size tracking:
-    - Added update_size() method to Segment
-    - Initialize segment size from file metadata
-    - Update size after each write
-    - Reduced test data size and segment size threshold
-2 Fixed WAL entry validation:
-    - Added newline after header JSON
-    - Properly handle empty lines
-    - Trim whitespace from entry JSON
-    - Skip newline after CRC
-    - Added more assertions in tests
-3 Improved segment rotation:
-    - Check for rotation after creating new segment
-    - Better error messages in tests
-    - More realistic segment size limits
-```
+> The key changes I made are:
+> 1 Fixed segment size tracking:
+>     - Added update_size() method to Segment
+>     - Initialize segment size from file metadata
+>     - Update size after each write
+>     - Reduced test data size and segment size threshold
+> 2 Fixed WAL entry validation:
+>     - Added newline after header JSON
+>     - Properly handle empty lines
+>     - Trim whitespace from entry JSON
+>     - Skip newline after CRC
+>     - Added more assertions in tests
+> 3 Improved segment rotation:
+>     - Check for rotation after creating new segment
+>     - Better error messages in tests
+>     - More realistic segment size limits
 
 We try again and it fails to compile, I allow it to iterate some more but it really feels like the AI is flailing now. The tests fail again, but Cursor provides some more valid sounding reasons for the failures. I let it keep iterating, but I am starting to doubt that it can get to a green test suite. It's like if the little engine that could had derailed, but still thought that it could get up the hill. It is fixing lots of little silly logical errors, or atleast that's what the prose it spits out suggests. I'm not paying close attention yet.
 
 I did call out earlier that the WAL being messed up probably means that the application will suffer data loss, so this isn't totally inspiring. Finally it sort of feels like it gives up and states:
 
-```
-Let's add some debug logging to understand why the segment isn't rotating
-```
+> Let's add some debug logging to understand why the segment isn't rotating
 
 I'm going to stop vibe coding for a minute and see if I can debug. My fear is that the flailing caused a mess and it seems like I shouldn't let it go further. This is unforunate though as I won't be vibes coding but coding coding (or even debugging coding). I want to keep this exercise rolling so no use getting totally stuck here.
 
@@ -259,17 +235,13 @@ let path = self.directory.join(filename);
 
 The tests pass now. I inform the agent that it can check the TODO items off. I didn't inspect much else too closely and to be honest I don't feel convinced of this implementation. Hunting down this one test fix did not inspire confidence. Regardless, we move on.
 
-```
-I was able to fix the tests. Feel free to check off the  WAL serialization format and Segment management sub sections of the TODO if you feel like these items have been completed.
-```
+> I was able to fix the tests. Feel free to check off the  WAL serialization format and Segment management sub sections of the TODO if you feel like these items have been completed.
 
 The agent dutifully obliges. It immediately asks to move on to the next TODO tasks. Look at me, I am the scrum master now. My programmer is moving tasks and I am keeping them motivated.
 
 I'm going to have Cursor move on to _Recovery Process_ and complete it before we wrap up the WAL with the _Tests_ section. I feel as though remaining focused it useful, especially for touchy bits of code.
 
-```
-Please implement the Recovery Process TODO items next
-```
+> Please implement the Recovery Process TODO items next
 
 Something interesting then happens, it writes code and checks off the TODO boxes. I'm not sure if it compiles and passes the tests (I didn't even look at the code) so I just ask to run the tests. It, of course, doesn't compile. I find it odd that it checked the boxes off this time so confidently, but had not done that in the previous sections. It iterates a bit and moves from a compilation error to a test failure for the checksum validation. It actully corrects the test failure and passes. Nice! What's interesting is that now it's really feeling itself and wants to check off the _Tests_ section in the _todo.md_ entirely. I accept, but I'm also going to peek at the code and the tests it wrote.
 
@@ -299,6 +271,7 @@ let entry = WalEntry {
     crc: 0, // Will be calculated below
 };
 ```
+
 What's funny is that _crc_ is always _0_ in this struct. The 'Will be calculated below' comment is true, but when it's calculated below it gets written separately outside of the struct's serialized JSON object. On disk this looks like:
 
 ```
@@ -311,4 +284,4 @@ And then the pattern contiues with a JSON entry, newline, checksum, newline, so 
 
 It does have a test where it writes something into the middle of the file and then tests that it gets caught in the corruption detection (this is great!). I suspected that this might be simply introducing a JSON parse error so it's not even using the checksum, and I was able to verify that it was in fact hitting the JSON parse error stanza. This was cracking me up to be honest. I was imagining a testsuite where a tag string value (for example) gets changed in the JSON blob and it gets caught by the verification code. Or the checksum is changed or whatever. Introducing invalid JSON and then not exercising the checksum and calling that good to go when testing the checksum validation is so funny. The vibes are so good.
 
-I'll set this down for the time being. The code thus far is [here](https://github.com/patrickgombert/vctsdb/tree/95ca9da3c6113e4a96f84cde4f570b27e6c4680a). Next will be _Phase 2: Storage Engine_ which gets into writing a Log Structured Merge-Tree to store the time indices on disk.
+I'll set this down for the time being. The code thus far is [here](https://github.com/patrickgombert/vctsdb/tree/95ca9da3c6113e4a96f84cde4f570b27e6c4680a). [Next time](https://patrickgombert.com/2025/vibe-coding-in-anger-part-2/) we will work on _Phase 2: Storage Engine_ which gets into writing a Log Structured Merge-Tree to store the time indices on disk.
