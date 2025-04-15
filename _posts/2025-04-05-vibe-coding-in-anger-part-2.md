@@ -197,5 +197,5 @@ Every flush in the vibe coded implementation, as it exists, just makes a new fil
 
 There's no coherent way to find things in these files. If you want to find a time series data point for T10 you would consult every file. But again, this issue is less concerning because expanded funcionality might just be coming later. I will try and embue the correct vibes to make this come true.
 
-This seems like a good place to set this down, but we'll have to break _Phase 2_ into two parts. We're now able to accept writes to a memtable, and perform a flush to disk. The code up to this point is [here](https://github.com/patrickgombert/vctsdb/tree/cf4524d29643b46b3e9b18774db7c4e0fed7684b). Next time, we'll implement _Time-Based Indexing_ which will have to search for datapoints across the memtable and any flushed sstables.
+This seems like a good place to set this down, but we'll have to break _Phase 2_ into two parts. We're now able to accept writes to a memtable, and perform a flush to disk. The code up to this point is [here](https://github.com/patrickgombert/vctsdb/tree/cf4524d29643b46b3e9b18774db7c4e0fed7684b). [Next time](https://patrickgombert.com/2025/vibe-coding-in-anger-part-3/), we'll implement _Time-Based Indexing_ which will have to search for datapoints across the memtable and any flushed sstables.
 
