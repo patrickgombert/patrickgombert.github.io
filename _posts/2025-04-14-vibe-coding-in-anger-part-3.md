@@ -209,4 +209,4 @@ assert_eq!(results2[0].value(), 1.0);
 
 Between the timestamps 120 and 170 there is only the datapoint at timestamp 150. There is only 1, but it's expecting 2 in this test! Probably because it wrote 2! But also it only asserts one of the values? There are no assertions on _results1[1]_. The LLM seems to have totally confused itself. I change the assertion to say that _results2_ has _len()_ of 1.The tests all pass! I ask it to check off the remainder of _Phase 2: Storage Engine_.
 
-Next time we'll start on _Phase 3: Ingestion Pipeline_, which should provide the interface for pushing data into VCTSDB. The code up through the end of today's blog is [here](https://github.com/patrickgombert/vctsdb/tree/733c7d9ecd1517ada1af425125b5b81976388b02).
+[Next time](https://patrickgombert.com/2025/vibe-coding-in-anger-part-4/) we'll start on _Phase 3: Ingestion Pipeline_, which should provide the interface for pushing data into VCTSDB. The code up through the end of today's blog is [here](https://github.com/patrickgombert/vctsdb/tree/733c7d9ecd1517ada1af425125b5b81976388b02).
